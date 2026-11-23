@@ -1,225 +1,265 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
+const passages = [
+  "The best way to learn programming is to practice every day and build projects that solve real problems.",
+  "Technology continues to change the world by making communication faster and information easier to access.",
+  "Success is not achieved overnight but through consistent effort patience and a willingness to learn.",
+  "Developers write code to create applications that make everyday tasks easier and more efficient.",
+  "Focus on improving your skills every day because small improvements lead to remarkable results.",
+];
+
+const TEST_DURATION = 60;
+
 export default function App() {
-  const [showPassword, setShowPassword] = useState(false);
+  const [text, setText] = useState(passages[0]);
+  const [input, setInput] = useState("");
+  const [timeLeft, setTimeLeft] = useState(TEST_DURATION);
+  const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
+
+  const inputRef = useRef(null);
+
+  const correctChars = input
+    .split("")
+    .filter((char, index) => char === text[index]).length;
+
+  const incorrectChars = input.length - correctChars;
+
+  const accuracy =
+    input.length > 0
+      ? Math.round((correctChars / input.length) * 100)
+      : 100;
+
+  const elapsedTime = TEST_DURATION - timeLeft;
+
+  const wpm =
+    elapsedTime > 0
+      ? Math.round(correctChars / 5 / (elapsedTime / 60))
+      : 0;
+
+  useEffect(() => {
+    if (!started || finished) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setFinished(true);
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [started, finished]);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+
+    if (finished || value.length > text.length) return;
+
+    if (!started && value.length > 0) {
+      setStarted(true);
+    }
+
+    setInput(value);
+
+    if (value.length === text.length) {
+      setFinished(true);
+    }
+  };
+
+  const restartTest = () => {
+    const newText = passages[Math.floor(Math.random() * passages.length)];
+
+    setText(newText);
+    setInput("");
+    setTimeLeft(TEST_DURATION);
+    setStarted(false);
+    setFinished(false);
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const formatTime = (seconds) => {
+    return `00:${String(seconds).padStart(2, "0")}`;
+  };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        {/* Left Side */}
-        <div className="login-left">
-          <div className="brand">
-            <div className="brand-icon">✦</div>
-            <span>nexora</span>
-          </div>
-
-          <div className="login-content">
-            <div className="welcome-tag">
-              <span className="status-dot"></span>
-              Welcome back
-            </div>
-
-            <h1>
-              Sign in to
-              <br />
-              your account
-            </h1>
-
-            <p className="subtitle">
-              Enter your details to access your workspace
-              and continue where you left off.
-            </p>
-
-            <form className="login-form">
-              <div className="form-group">
-                <label htmlFor="email">Email address</label>
-
-                <div className="input-wrapper">
-                  <span className="input-icon">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <rect
-                        x="3"
-                        y="5"
-                        width="18"
-                        height="14"
-                        rx="3"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                      />
-                      <path
-                        d="M4 7L12 13L20 7"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <div className="label-row">
-                  <label htmlFor="password">Password</label>
-                  <a href="#forgot">Forgot password?</a>
-                </div>
-
-                <div className="input-wrapper">
-                  <span className="input-icon">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <rect
-                        x="4"
-                        y="10"
-                        width="16"
-                        height="11"
-                        rx="3"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                      />
-                      <path
-                        d="M8 10V7a4 4 0 1 1 8 0v3"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="remember-row">
-                <label className="remember-label">
-                  <input type="checkbox" />
-                  <span className="custom-checkbox"></span>
-                  Remember me
-                </label>
-              </div>
-
-              <button type="submit" className="login-button">
-                Sign in
-                <span>→</span>
-              </button>
-            </form>
-
-            <div className="divider">
-              <span>OR CONTINUE WITH</span>
-            </div>
-
-            <button className="google-button" type="button">
-              <svg viewBox="0 0 48 48" width="19" height="19">
-                <path
-                  fill="#FFC107"
-                  d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8.1 3.2l5.7-5.7C34.2 5.8 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5Z"
-                />
-                <path
-                  fill="#FF3D00"
-                  d="m6.3 14.7 6.6 4.8C14.7 15.2 19 12 24 12c3.1 0 5.9 1.2 8.1 3.2l5.7-5.7C34.2 5.8 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7Z"
-                />
-                <path
-                  fill="#4CAF50"
-                  d="M24 44c5.2 0 10-2 13.6-5.4l-6.3-5.3C29.2 35.1 26.7 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.6 5C9.4 39.6 16.2 44 24 44Z"
-                />
-                <path
-                  fill="#1976D2"
-                  d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.3 5.3C41.1 35.2 44 29.9 44 24c0-1.2-.1-2.4-.4-3.5Z"
-                />
-              </svg>
-              Continue with Google
-            </button>
-
-            <p className="signup-text">
-              Don't have an account? <a href="#signup">Create account</a>
-            </p>
-          </div>
-
-          <div className="login-footer">
-            <span>© 2026 Nexora Inc.</span>
-            <div>
-              <a href="#privacy">Privacy</a>
-              <a href="#terms">Terms</a>
-            </div>
-          </div>
+    <div className="typing-app">
+      <header className="header">
+        <div className="brand">
+          <div className="brand-logo">⌨</div>
+          <span>TypeFlow</span>
         </div>
 
-        {/* Right Side */}
-        <div className="login-right">
-          <div className="visual-grid"></div>
+        <div className="header-badge">
+          <span className="live-dot"></span>
+          Typing Practice
+        </div>
+      </header>
 
-          <div className="visual-content">
-            <div className="floating-card card-top">
-              <div className="mini-icon">↗</div>
-              <div>
-                <span className="card-label">Productivity</span>
-                <strong>+28.4%</strong>
-              </div>
+      <main className="main-content">
+        <section className="intro">
+          <span className="eyebrow">YOUR DAILY PRACTICE</span>
+          <h1>
+            Test your <span>typing speed.</span>
+          </h1>
+          <p>
+            Improve your speed, accuracy, and focus.
+            Every keystroke makes you better.
+          </p>
+        </section>
+
+        <section className="stats">
+          <div className="stat-card">
+            <span className="stat-label">WORDS / MIN</span>
+            <strong>{finished ? wpm : wpm}</strong>
+            <span className="stat-description">Typing speed</span>
+          </div>
+
+          <div className="stat-card">
+            <span className="stat-label">ACCURACY</span>
+            <strong>{accuracy}%</strong>
+            <span className="stat-description">Correct characters</span>
+          </div>
+
+          <div className="stat-card timer-card">
+            <span className="stat-label">TIME LEFT</span>
+            <strong className={timeLeft <= 10 ? "timer-warning" : ""}>
+              {formatTime(timeLeft)}
+            </strong>
+            <span className="stat-description">
+              {started ? "Test in progress" : "60 second test"}
+            </span>
+          </div>
+        </section>
+
+        <section className="typing-card">
+          <div className="typing-card-header">
+            <div className="test-info">
+              <span className="test-indicator"></span>
+              <span>English text</span>
+              <span className="separator">/</span>
+              <span>60 seconds</span>
             </div>
 
-            <div className="visual-circle">
-              <div className="circle circle-outer"></div>
-              <div className="circle circle-middle"></div>
-              <div className="circle circle-inner"></div>
+            <button className="restart-button" onClick={restartTest}>
+              <span>↻</span> Restart
+            </button>
+          </div>
 
-              <div className="center-logo">
-                <span>✦</span>
-              </div>
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{
+                width: `${(input.length / text.length) * 100}%`,
+              }}
+            />
+          </div>
 
-              <div className="orbit-dot dot-one"></div>
-              <div className="orbit-dot dot-two"></div>
-              <div className="orbit-dot dot-three"></div>
+          <div
+            className="passage"
+            onClick={() => inputRef.current?.focus()}
+          >
+            {text.split("").map((char, index) => {
+              let className = "char";
+
+              if (index < input.length) {
+                className +=
+                  input[index] === char ? " correct" : " incorrect";
+              } else if (index === input.length) {
+                className += " current";
+              }
+
+              return (
+                <span key={index} className={className}>
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              );
+            })}
+          </div>
+
+          <textarea
+            ref={inputRef}
+            className="typing-input"
+            value={input}
+            onChange={handleChange}
+            disabled={finished}
+            placeholder={
+              finished
+                ? "Test completed!"
+                : "Start typing the text above..."
+            }
+            spellCheck="false"
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+          />
+
+          <div className="typing-card-footer">
+            <div className="keyboard-hint">
+              <kbd>Tab</kbd>
+              <span>Restart test</span>
             </div>
 
-            <div className="floating-card card-bottom">
-              <div className="avatar-stack">
-                <div className="avatar avatar-one">A</div>
-                <div className="avatar avatar-two">J</div>
-                <div className="avatar avatar-three">M</div>
-                <div className="avatar avatar-four">+</div>
-              </div>
-
-              <div>
-                <strong>2,400+</strong>
-                <span className="card-label">People working smarter</span>
-              </div>
+            <div className="character-count">
+              {input.length} / {text.length} characters
             </div>
+          </div>
+        </section>
 
-            <div className="right-text">
-              <h2>Everything you need.</h2>
+        {finished && (
+          <section className="result-card">
+            <div className="result-icon">🏆</div>
+            <div>
+              <h2>Test completed!</h2>
               <p>
-                One workspace. Endless possibilities.
-                Stay focused, stay productive, and
-                make your next big move.
+                You typed at <strong>{wpm} WPM</strong> with{" "}
+                <strong>{accuracy}% accuracy</strong>.
               </p>
             </div>
+
+            <button onClick={restartTest}>Try again →</button>
+          </section>
+        )}
+
+        <section className="tips">
+          <div className="tip">
+            <div className="tip-icon">⌘</div>
+            <div>
+              <strong>Stay focused</strong>
+              <p>Keep your eyes on the text.</p>
+            </div>
           </div>
 
-          <div className="right-footer">
-            <span>Designed for modern teams</span>
-            <span>● ● ●</span>
+          <div className="tip">
+            <div className="tip-icon">⚡</div>
+            <div>
+              <strong>Find your rhythm</strong>
+              <p>Speed comes with consistency.</p>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="tip">
+            <div className="tip-icon">✓</div>
+            <div>
+              <strong>Prioritize accuracy</strong>
+              <p>Correct typing beats rushing.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="footer">
+        <span>TypeFlow</span>
+        <span>Practice. Improve. Repeat.</span>
+      </footer>
     </div>
   );
 }
